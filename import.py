@@ -3,6 +3,7 @@ from dateutil.parser import parse
 from datetime import datetime
 import pytz
 from sklearn import preprocessing
+from textblob import TextBlob
 
 # Used to stop us getting loans that aren't expired yet.
 DATE_OF_DUMP = '2016-11-24T17:51:04Z'
@@ -12,7 +13,7 @@ FIRST_FILE = 2037
 LAST_FILE = 2271
 
 # Gets every xTh file, use 1 to use every file.
-FILE_INCREMENT = 50
+FILE_INCREMENT = 500
 
 OUTPUT_TRAIN = 'output/train_rough_k.csv'
 
@@ -27,6 +28,7 @@ KEYS = ['sector', 'loan_amount','partner_id']
 
 INTERESTING_COUNTRIES =['Tajikistan', 'Albania', 'Armenia', 'Azerbaijan',
 					'Kyrgyzstan', 'Kosovo', 'Mongolia', 'Turkey','Ukraine']
+
 
 
 def readFile(fileName):
@@ -60,8 +62,20 @@ def readFile(fileName):
 		row.append(expired)		
 
 		# Description length
-		if 'en' in obj['description']['texts']:			
-			row.append(len(obj['description']['texts']['en'].encode('utf8', 'replace')))
+		if 'en' in obj['description']['texts']:		
+			description_string = obj['description']['texts']['en'].encode('utf8', 'replace')
+			row.append(len(description_string))
+			blob = TextBlob(description_string)
+
+			# TODO: don't send funky asii to TExtBlob it can't handle it.
+			print("----")
+			for sentence in blob.sentences:
+				if sentence.sentiment.polarity > 0.4 or sentence.sentiment.polarity < -0.4:
+					print(sentence)
+					print(sentence.sentiment)
+					print("----")
+
+			print("----")
 			# some dumps have no description even though the API returns a description, particularly for delinquent or defaulted loans:
 			if len(obj['description']['texts']['en'].encode('utf8', 'replace')) == 0:
 				print "Missing desc in dump: http://api.kivaws.org/v1/loans/" + str(obj['id']) + ".json"
@@ -101,7 +115,7 @@ for key in KEYS:
 csv_file.writerow(row)
 
 # Iterate over files
-for i in range(FIRST_FILE, LAST_FILE, 1):
+for i in range(FIRST_FILE, LAST_FILE, FILE_INCREMENT):
 	print "Read " +  str(i) 
 	readFile("kiva_ds_json/loans/" + str(i) + ".json")
 

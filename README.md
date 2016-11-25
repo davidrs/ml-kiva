@@ -6,7 +6,13 @@ Use machine learning to predict loan expiration on Kiva's site.
 
 1. Download the json snapshot and unzip it into this folder. https://build.kiva.org/docs/data/snapshots
 
+pip install TextBlob
+
+
 2. Use import.py to generate a single csv of training data.
+
+```python import.py```
+
 
 3. Build a model using the data. BigML, Tensorflow, etc.
 ml.py, and mlChart.py are me starting to play around, but not working yet.
